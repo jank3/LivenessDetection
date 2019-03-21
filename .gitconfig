@@ -1,0 +1,8 @@
+[user]
+    name = Jose Antonio Jimenez
+    email = jantonio.jimenez@gmail.com
+[color]
+	status = auto
+	branch = auto
+	diff = auto
+	interactive = auto
