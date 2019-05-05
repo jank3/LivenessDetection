@@ -12,13 +12,54 @@ import imutils
 import dlib
 import numpy as np
 import cv2
+import operations
+import requests
+import json
+import base64
 
+operaciones = operations.operations()
+
+openW = False
+
+
+#curl -H "Authorization: Bearer $REFRESH" -X POST http://localhost:5000/refresh
+
+#bodyToken ={'username':'test','password':'test'}
+#headersV={'Content-Type':'application/json; charset=utf-8',  'Accept': 'application/json', 'tenantid': tenantid, 'tenantkey': tenantkey}
+#token = requests.post(url + '/login',headers = headersV, data=json.dumps(bodyToken))
+#tokenT = json.loads(token.text)
+
+#with open('textTk.json', 'w') as f:
+#     json.dump(token.text, f)
+#
+#encoded_string = ""
+#
+#with open("face.png", "rb") as image_file:
+#    encoded = base64.b64encode(image_file.read()).decode()
+#    encoded_string = 'data:image/png;base64,{}'.format(encoded)
+
+#headersV={'tenantid': tenantid, 'tenantkey': tenantkey,'Authorization': 'Bearer ' + str(tokenT["access_token"])}
+
+#dataBody = {"image": encoded_string}    
+
+#detectaRostro = requests.post(url + "/kycfaceid/v1/image/recognize", headers = headersV, data=dataBody)
+
+#textoRostro = json.loads(detectaRostro.text)
+
+#with open('text1.json', 'w') as f:
+ #    json.dump(detectaRostro.text, f)
+
+
+#print(detectaRostro.text)
 
 # construct the argument parser and parse the arguments
 ap = argparse.ArgumentParser()
 ap.add_argument("-p", "--shape-predictor", required=True,
 	help="path to facial landmark predictor")
 args = vars(ap.parse_args())
+operacion = operations.operations()
+
+
 
 # define a dictionary that maps the indexes of the facial
 # landmarks to specific face regions
@@ -86,8 +127,12 @@ event = "none"
 event2 = "none"
 detector = dlib.get_frontal_face_detector()
 predictor = dlib.shape_predictor(args["shape_predictor"])
+
 while(True):
-    # Capture frame-by-frame
+
+
+
+    # Dapture frame-by-frame
     ret, frame = cap.read()
     rame = imutils.resize(frame, width=450)
     # Our operations on the frame come here
@@ -98,50 +143,72 @@ while(True):
     rects = detector(gray, 1)
     # loop over the face detections
     for (i, rect) in enumerate(rects):
-    	# determine the facial landmarks for the face region, then
-    	# convert the facial landmark (x, y)-coordinates to a NumPy
-    	# array of face
-    	shape = predictor(gray, rect)
-    	shape = face_utils.shape_to_np(shape)
 
-    	# 0.6 right and 1.6 left threshold
-    	ratio = turn_aspect_ratio(shape[1],shape[28],shape[17])
-    	lips_ratio = open_mouth_detection(shape[62],shape[66],shape[49],shape[59])
-    	if lips_ratio>0.32:
-    		event2="Mouth Open"
-    	else :
-    		event2="Mouth Close"
+        shape = predictor(gray, rect)
+        shape = face_utils.shape_to_np(shape)
+	
+        token = operaciones.getToken()
+        
+        reconoce = operaciones.Recognize(frame,token)
+                   	
+        textoRostro = reconoce		
+   	
+        # 0.6 right and 1.6 left threshold
+        ratio = turn_aspect_ratio(shape[1],shape[28],shape[17])
+        lips_ratio = open_mouth_detection(shape[62],shape[66],shape[49],shape[59])
+        if lips_ratio>0.32:
+            event2="Mouth Open"
+        else :
+            event2="Mouth Close"
 
-    	cv2.line(rame, tuple(shape[62]), tuple(shape[66]), (180, 42, 220), 2)
-    	cv2.line(rame, tuple(shape[49]), tuple(shape[59]), (180, 42, 220), 2)
-    	cv2.line(rame, tuple(shape[1]), tuple(shape[28]), (19, 199, 109), 2)
-    	cv2.line(rame, tuple(shape[28]), tuple(shape[17]), (19, 199, 109), 2)
-    	if ratio<0.6:
-    		event="Right turn"
-    	elif ratio>1.6:
-    		event="Left turn"
-    	else :
-    		event="none"
-    	# convert dlib's rectangle to a OpenCV-style bounding box
-    	# [i.e., (x, y, w, h)], then draw the face bounding box
-    	(x, y, w, h) = face_utils.rect_to_bb(rect)
-    	cv2.rectangle(rame, (x, y), (x + w, y + h), (0, 255, 0), 2)
+        cv2.line(rame, tuple(shape[62]), tuple(shape[66]), (180, 42, 220), 2)
+        cv2.line(rame, tuple(shape[49]), tuple(shape[59]), (180, 42, 220), 2)
+        cv2.line(rame, tuple(shape[1]), tuple(shape[28]), (19, 199, 109), 2)
+        cv2.line(rame, tuple(shape[28]), tuple(shape[17]), (19, 199, 109), 2)
+        if ratio<0.6:
+            event="Right turn"
+        elif ratio>1.6:
+            event="Left turn"
+        else :
+            event="none"
+        # convert dlib's rectangle to a OpenCV-style bounding box
+        # [i.e., (x, y, w, h)], then draw the face bounding box
+        (x, y, w, h) = face_utils.rect_to_bb(rect)
+        cv2.rectangle(rame, (x, y), (x + w, y + h), (0, 255, 0), 2)
 
-    	# show the face number
-    	cv2.putText(rame, "Face #{}".format(i + 1), (x - 10, y - 10),
-    		cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+        # show the face number
+        #cv2.putText(rame, "Face #{}".format(i + 1), (x - 10, y - 10),
+        #    cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
 
-    	cv2.putText(rame, "Ratio: {}--{}".format(event,event2), (10, 30),
-			cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
+        #cv2.putText(rame, "Ratio: {}--{}".format(event,event2), (10, 30),
+        #    cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
 
-    	# loop over the (x, y)-coordinates for the facial landmarks
-    	# and draw them on the image
-    	for (x, y) in shape:
-    		cv2.circle(rame, (x, y), 1, (0, 0, 255), -1)
+        try:
+            if("message" in textoRostro):            
+                cv2.putText(rame, "Rostro sin reconocer", (10, 30),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
+                
+                if(openW==False):
+                    openW=True
+                    ##Crea usuario y agrega face pero solo permite tener 1 nombre, 1 apellido, 1 details, 1 id en la base por restriccion
+                    
+                    iduser = operaciones.addUser("ejemplo nombre","ejemplo apelleido","ejemplo details","ejemplo id",token)
+                    idface = operaciones.addFace(frame,str(iduser["result"]),token)
+                    print(idface)
+
+            else:
+                cv2.putText(rame, str(textoRostro[0]["name"]), (10, 30),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
+                openW=False
+        except Exception as e:
+            print(str(e))
 
 
+        # loop over the (x, y)-coordinates for the facial landmarks
+        # and draw them on the image
+        for (x, y) in shape:
+            cv2.circle(rame, (x, y), 1, (0, 0, 255), -1)
 
-    # Display the resulting frame
     cv2.imshow('frame',rame)
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
