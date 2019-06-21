@@ -12,12 +12,13 @@ import imutils
 import dlib
 import numpy as np
 import cv2
-import operations
+import operationN
 import requests
 import json
 import base64
+import datetime
 
-operaciones = operations.operations()
+operaciones = operationN.operations()
 
 openW = False
 
@@ -57,7 +58,7 @@ ap = argparse.ArgumentParser()
 ap.add_argument("-p", "--shape-predictor", required=True,
 	help="path to facial landmark predictor")
 args = vars(ap.parse_args())
-operacion = operations.operations()
+#operacion = operations.operations()
 
 
 
@@ -147,11 +148,9 @@ while(True):
         shape = predictor(gray, rect)
         shape = face_utils.shape_to_np(shape)
 	
-        token = operaciones.getToken()
-        
-        reconoce = operaciones.Recognize(frame,token)
-                   	
-        textoRostro = reconoce		
+        reconoce = operaciones.Recognize(frame)
+        reconocejs =  json.loads(reconoce)
+        textoRostro = reconocejs	
    	
         # 0.6 right and 1.6 left threshold
         ratio = turn_aspect_ratio(shape[1],shape[28],shape[17])
@@ -191,9 +190,10 @@ while(True):
                 if(openW==False):
                     openW=True
                     ##Crea usuario y agrega face pero solo permite tener 1 nombre, 1 apellido, 1 details, 1 id en la base por restriccion
-                    
-                    iduser = operaciones.addUser("ejemplo nombre","ejemplo apelleido","ejemplo details","ejemplo id",token)
-                    idface = operaciones.addFace(frame,str(iduser["result"]),token)
+                    time = datetime.datetime.now()
+                    iduser = operaciones.addUser(str(time),"ejemplo apelleido","ejemplo details",str(time))
+                    iduserJs = json.loads(iduser)
+                    idface = operaciones.addFace(frame,str(iduserJs["result"]))
                     print(idface)
 
             else:

@@ -22,7 +22,7 @@ class operations:
         headers = {'Content-Type': 'application/json; charset=utf-8', 'Accept': 'application/json', 'tenantid': self.tenantid, 'tenantkey': self.tenantkey}
         dataToken = json.dumps({'username': self.username, 'password': self.password})
 
-        respToken = requests.post( self.urlLocal + 'login',headers = headers,data = dataToken)
+        respToken = requests.post( self.url + 'login',headers = headers,data = dataToken)
 
         if respToken.status_code != 200:
             print(respToken.status_code)
@@ -44,17 +44,17 @@ class operations:
         headers = {"Authorization": 'Bearer ' + str(token),'tenantid': self.tenantid, 'tenantkey': self.tenantkey}
         dataReco = {"image": baseUri}
         
-        respReco = requests.post(self.urlLocal + 'kycfaceid/v1/image/recognize',headers = headers,data = dataReco)
+        respReco = requests.post(self.url + 'kycfaceid/v1/image/recognize',headers = headers,data = dataReco)
                 
         return json.loads(respReco.text)
 
 
     def addUser(self,name, lastname, details, idIn, token):
-    
-        headers = {"Authorization": 'Bearer ' + token,'tenantid': self.tenantid, 'tenantkey': self.tenantkey}
+   
+        headers = {"Authorization": 'Bearer ' + str(token),'tenantid': self.tenantid, 'tenantkey': self.tenantkey}
         data = {"name": name, "lastname": lastname, "details": details, "idIn": idIn}
 
-        respAdd = requests.post(self.urlLocal + 'kycfaceid/v1/user/create',headers = headers,data = data)
+        respAdd = requests.post(self.url + 'kycfaceid/v1/user/create',headers = headers,data = data)
         print(respAdd)
         return json.loads(respAdd.text)
 
@@ -67,10 +67,28 @@ class operations:
             encoded = base64.b64encode(imageFile.read()).decode()
             baseUri = 'data:image/png;base64,{}'.format(encoded)
 
-        headers = {"Authorization": 'Bearer ' + token,'tenantid': self.tenantid, 'tenantkey': self.tenantkey}
+        headers = {"Authorization": 'Bearer ' + str(token),'tenantid': self.tenantid, 'tenantkey': self.tenantkey}
         dataReco = {"image": baseUri, "userId": userId}
     
-        respReco = requests.post(self.urlLocal + 'kycfaceid/v1/user/addface',headers = headers,data = dataReco)
+        respReco = requests.post(self.url + 'kycfaceid/v1/user/addface',headers = headers,data = dataReco)
 
 
         return json.loads(respReco.text)
+
+    def testImage(self,token):
+        try:
+            baseUri=""
+            with open("face.png", "rb") as imageFile:
+                encoded = base64.b64encode(imageFile.read()).decode()
+                baseUri = 'data:image/png;base64,{}'.format(encoded)
+
+
+            headers = {"Authorization": 'Bearer ' + str(token),'tenantid': self.tenantid, 'tenantkey': self.tenantkey}
+            dataReco = {"image": baseUri}
+
+            respReco = requests.post(self.url + 'kycfaceid/v1/image/recognize',headers = headers,data = dataReco)
+            print(respReco)
+            return json.loads(respReco.text)
+                    
+        except Exception as e:
+            return(e)
